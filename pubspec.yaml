@@ -1,0 +1,30 @@
+name: fastflow_app
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.5.3
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.2.2
+  shared_preferences: ^2.3.0
+  fl_chart: ^0.66.0
+  intl: ^0.20.2
+
+dev_dependencies:
+  flutter_lints: ^4.0.0
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  assets:
+    - assets/icon.png
+    - assets/service_placeholder.png
+    - assets/warn.png
+    - assets/safe.png
+    - assets/car_icon.png
+    - assets/logo.png
+  uses-material-design: true

@@ -1,0 +1,20 @@
+import 'package:fastflow_app/iam/screens/splash_screen.dart';
+import 'package:fastflow_app/main_screen.dart';
+import 'package:flutter/material.dart';
+
+void main() {
+  runApp(const MainApp());
+}
+
+class MainApp extends StatelessWidget {
+  const MainApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      debugShowCheckedModeBanner: false,
+        title: 'Chemtrack App',
+      home: SplashScreen()
+    );
+  }
+}
