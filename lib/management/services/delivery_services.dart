@@ -5,7 +5,7 @@ import 'package:fastflow_app/management/models/delivery.dart';
 import 'package:http/http.dart' as http;
 
 class DeliveriesService {
-  final String baseUrl = "https://chemtrack-backend-production.up.railway.app/api/safe-flow/v1/deliveries";
+  final String baseUrl = "http://localhost:8080/api/safe-flow/v1/deliveries";
 
   Future<List<Deliveries>> getAllDeliveries() async {
     final http.Response response = await http.get(Uri.parse(baseUrl));
@@ -19,7 +19,8 @@ class DeliveriesService {
   }
 
   Future<List<Deliveries>> getPendingDeliveries() async {
-    final http.Response response = await http.get(Uri.parse('$baseUrl/state/PENDING'));
+    final http.Response response =
+        await http.get(Uri.parse('$baseUrl/state/PENDING'));
 
     if (response.statusCode == HttpStatus.ok) {
       final List<dynamic> jsonResponse = json.decode(response.body);
@@ -30,7 +31,8 @@ class DeliveriesService {
   }
 
   Future<List<Deliveries>> getDeliveryByEmployeeId(int employeeId) async {
-    final http.Response response = await http.get(Uri.parse('$baseUrl/employee/$employeeId'));
+    final http.Response response =
+        await http.get(Uri.parse('$baseUrl/employee/$employeeId'));
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonList = json.decode(response.body);
@@ -46,11 +48,14 @@ class DeliveriesService {
       headers: {"Content-Type": "application/json"},
     );
 
-    if (response.statusCode == HttpStatus.noContent || response.statusCode == HttpStatus.ok) {
-      print('Delivery $deliveryId status updated to IN-PROGRESS successfully for employee $employeeId.');
+    if (response.statusCode == HttpStatus.noContent ||
+        response.statusCode == HttpStatus.ok) {
+      print(
+          'Delivery $deliveryId status updated to IN-PROGRESS successfully for employee $employeeId.');
       // No es necesario hacer nada más si la operación fue exitosa y no hay contenido.
     } else {
-      print('Failed to update delivery status. Status code: ${response.statusCode}');
+      print(
+          'Failed to update delivery status. Status code: ${response.statusCode}');
       print('Response body: ${response.body}'); // Útil para depurar
       throw Exception('Failed to update delivery status to in-progress');
     }
@@ -62,11 +67,13 @@ class DeliveriesService {
       headers: {"Content-Type": "application/json"},
     );
 
-    if (response.statusCode == HttpStatus.noContent || response.statusCode == HttpStatus.ok) {
+    if (response.statusCode == HttpStatus.noContent ||
+        response.statusCode == HttpStatus.ok) {
       print('Delivery $deliveryId status updated to COMPLETED successfully');
       // No es necesario hacer nada más si la operación fue exitosa y no hay contenido.
     } else {
-      print('Failed to update delivery status. Status code: ${response.statusCode}');
+      print(
+          'Failed to update delivery status. Status code: ${response.statusCode}');
       print('Response body: ${response.body}'); // Útil para depurar
       throw Exception('Failed to update delivery status to completed');
     }

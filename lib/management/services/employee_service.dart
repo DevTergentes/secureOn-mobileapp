@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class EmployeeService {
-  final String baseUrl = "https://chemtrack-backend-production.up.railway.app/api/safeflow/v1/employees";
+  final String baseUrl = "http://localhost:8080/api/safeflow/v1/employees";
 
   Future<int> getEmployeeIdByUserId(int userId) async {
     final response = await http.get(
@@ -19,7 +19,8 @@ class EmployeeService {
         throw Exception('Employee list is empty or invalid');
       }
     } else {
-      throw Exception('Failed to fetch employee ID - Status: ${response.statusCode}');
+      throw Exception(
+          'Failed to fetch employee ID - Status: ${response.statusCode}');
     }
   }
 }

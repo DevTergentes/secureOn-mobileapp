@@ -4,14 +4,15 @@ import 'package:fastflow_app/management/models/servicios.dart';
 import 'package:http/http.dart' as http;
 
 class ServiciosService {
-  final String baseUrl = "https://chemtrack-backend-production.up.railway.app/api/safe-flow/v1/services";
+  final String baseUrl = "http://localhost:8080/api/safe-flow/v1/services";
 
   Future<List<Servicios>> getAll() async {
     final http.Response response = await http.get(Uri.parse(baseUrl));
 
     if (response.statusCode == HttpStatus.ok) {
       final jsonResponse = json.decode(response.body);
-      if (jsonResponse is Map<String, dynamic> && jsonResponse.containsKey("results")) {
+      if (jsonResponse is Map<String, dynamic> &&
+          jsonResponse.containsKey("results")) {
         final List<dynamic> maps = jsonResponse["results"];
         return maps.map((map) => Servicios.fromJson(map)).toList();
       } else if (jsonResponse is List<dynamic>) {

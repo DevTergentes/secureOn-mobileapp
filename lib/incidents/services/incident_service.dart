@@ -3,9 +3,8 @@ import 'dart:io';
 import 'package:fastflow_app/incidents/models/incident.dart';
 import 'package:http/http.dart' as http;
 
-
 class IncidentsService {
-  final String baseUrl = "https://chemtrack-backend-production.up.railway.app/api/safe-flow/v1/incidents";
+  final String baseUrl = "http://localhost:8080/api/safe-flow/v1/incidents";
 
   Future<List<Incident>> getAllIncidents() async {
     final http.Response response = await http.get(Uri.parse(baseUrl));
@@ -31,7 +30,8 @@ class IncidentsService {
   }
 
   Future<List<Incident>> getIncidentsByDelivery(int deliveryId) async {
-    final http.Response response = await http.get(Uri.parse('$baseUrl/delivery/$deliveryId'));
+    final http.Response response =
+        await http.get(Uri.parse('$baseUrl/delivery/$deliveryId'));
 
     if (response.statusCode == HttpStatus.ok) {
       final List<dynamic> jsonResponse = json.decode(response.body);
