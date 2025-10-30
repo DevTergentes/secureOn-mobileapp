@@ -5,7 +5,7 @@ import 'package:fastflow_app/management/models/delivery.dart';
 import 'package:http/http.dart' as http;
 
 class DeliveriesService {
-  final String baseUrl = "http://localhost:8080/api/safe-flow/v1/deliveries";
+  final String baseUrl = "http://localhost:8080/api/secureon/v1/deliveries";
 
   Future<List<Deliveries>> getAllDeliveries() async {
     final http.Response response = await http.get(Uri.parse(baseUrl));
@@ -103,8 +103,14 @@ class DeliveriesService {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      return data['state']; // devuelve el estado como string
+      final state = data['state'];
+      if (state is String && state.isNotEmpty) {
+        return state;
+      }
+      print('getDeliveryState: Response JSON does not contain "state" key or is empty: ${response.body}');
+      throw Exception('Invalid delivery payload (missing state)');
     } else {
+      print('getDeliveryState: HTTP ${response.statusCode} body=${response.body}');
       throw Exception('Failed to load delivery state');
     }
   }

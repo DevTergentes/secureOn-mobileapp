@@ -7,7 +7,7 @@ import '../models/monitoring_summary.dart';
 
 class RecordService {
   final String baseUrl =
-      "http://localhost:8080/api/safeflow/v1/records/delivery";
+      "http://localhost:8080/api/secureon/v1/records/delivery";
 
   Future<MonitoringSummary> getMonitoringSummary(int deliveryId) async {
     try {
@@ -58,7 +58,7 @@ class RecordService {
 
   Future<bool> isSafe(int deliveryId) async {
     final http.Response response = await http.get(Uri.parse(
-        'http://localhost:8080/api/safeflow/v1/sensors/delivery/$deliveryId'));
+        'http://localhost:8080/api/secureon/v1/sensors/delivery/$deliveryId'));
 
     if (response.statusCode == HttpStatus.ok) {
       final List<dynamic> jsonList = json.decode(response.body);

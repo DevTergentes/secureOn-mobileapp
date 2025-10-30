@@ -4,7 +4,7 @@ import 'package:fastflow_app/management/models/servicios.dart';
 import 'package:http/http.dart' as http;
 
 class ServiciosService {
-  final String baseUrl = "http://localhost:8080/api/safe-flow/v1/services";
+  final String baseUrl = "http://localhost:8080/api/secureon/v1/services";
 
   Future<List<Servicios>> getAll() async {
     final http.Response response = await http.get(Uri.parse(baseUrl));

@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class EmployeeService {
-  final String baseUrl = "http://localhost:8080/api/safeflow/v1/employees";
+  final String baseUrl = "http://localhost:8080/api/secureon/v1/employees";
 
   Future<int> getEmployeeIdByUserId(int userId) async {
     final response = await http.get(

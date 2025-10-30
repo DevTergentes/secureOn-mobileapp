@@ -4,7 +4,7 @@ import 'package:fastflow_app/incidents/models/incident.dart';
 import 'package:http/http.dart' as http;
 
 class IncidentsService {
-  final String baseUrl = "http://localhost:8080/api/safe-flow/v1/incidents";
+  final String baseUrl = "http://localhost:8080/api/secureon/v1/incidents";
 
   Future<List<Incident>> getAllIncidents() async {
     final http.Response response = await http.get(Uri.parse(baseUrl));
@@ -13,6 +13,7 @@ class IncidentsService {
       final List<dynamic> jsonResponse = json.decode(response.body);
       return jsonResponse.map((data) => Incident.fromJson(data)).toList();
     } else {
+      print('getAllIncidents: HTTP ${response.statusCode} body=${response.body}');
       throw Exception('Failed to load incidents');
     }
   }
@@ -37,6 +38,7 @@ class IncidentsService {
       final List<dynamic> jsonResponse = json.decode(response.body);
       return jsonResponse.map((data) => Incident.fromJson(data)).toList();
     } else {
+      print('getIncidentsByDelivery: HTTP ${response.statusCode} for id=$deliveryId body=${response.body}');
       throw Exception('Failed to load incidents');
     }
   }
