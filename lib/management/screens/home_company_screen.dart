@@ -8,6 +8,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../incidents/screens/incident_list_screen.dart';
 import '../../main_screen.dart';
 import 'monitoring_screen.dart';
+import 'sensors_list_screen.dart';
+import 'employees_list_screen.dart';
 
 /**
  * muestra los tres entregas más recientes y permite buscar por destino
@@ -188,6 +190,48 @@ class _HomeCompanyScreenState extends State<HomeCompanyScreen> {
                 ),
               ),
             ),
+            // Management Cards Section
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+              child: Text(
+                'Management',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildManagementCard(
+                      icon: Icons.sensors,
+                      title: 'Sensors',
+                      color: Colors.blue,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const SensorsListScreen()),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildManagementCard(
+                      icon: Icons.people,
+                      title: 'Employees',
+                      color: Colors.purple,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const EmployeesListScreen()),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               child: Row(
@@ -293,6 +337,49 @@ class _HomeCompanyScreenState extends State<HomeCompanyScreen> {
                   ),
                 ],
               ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildManagementCard({
+    required IconData icon,
+    required String title,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(20.0),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12.0),
+          border: Border.all(color: color.withOpacity(0.3), width: 1),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black12,
+              blurRadius: 8,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 40, color: color),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),

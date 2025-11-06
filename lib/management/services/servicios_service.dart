@@ -4,7 +4,7 @@ import 'package:fastflow_app/management/models/servicios.dart';
 import 'package:http/http.dart' as http;
 
 class ServiciosService {
-  final String baseUrl = "http://localhost:8080/api/secureon/v1/services";
+  final String baseUrl = "https://secureon-backend-production.up.railway.app/api/secureon/v1/services";
 
   Future<List<Servicios>> getAll() async {
     final http.Response response = await http.get(Uri.parse(baseUrl));
@@ -32,7 +32,9 @@ class ServiciosService {
       body: json.encode(service.toJson()),
     );
 
-    if (response.statusCode != HttpStatus.created) {
+    if (response.statusCode != HttpStatus.ok && response.statusCode != HttpStatus.created) {
+      print('Failed to add service. Status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
       throw Exception('Failed to add service');
     }
   }
@@ -40,7 +42,9 @@ class ServiciosService {
   Future<void> deleteService(int id) async {
     final http.Response response = await http.delete(Uri.parse('$baseUrl/$id'));
 
-    if (response.statusCode != HttpStatus.noContent) {
+    if (response.statusCode != HttpStatus.ok && response.statusCode != HttpStatus.noContent) {
+      print('Failed to delete service. Status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
       throw Exception('Failed to delete service');
     }
   }

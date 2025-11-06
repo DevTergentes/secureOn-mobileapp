@@ -42,17 +42,19 @@ class Deliveries {
 
   // Método para convertir el objeto a JSON
   Map<String, dynamic> toJson() {
-    return {
-      "id": id,
+    final json = <String, dynamic>{
       "destination": destination,
       "packageDescription": packageDescription,
       "exitPoint": exitPoint,
       "route": route,
       "stop": stop,
       "combustibleType": combustibleType,
-      "employeeId": employeeId,
       "ownerId": ownerId,
       "state": state,
     };
+    // Solo incluir campos opcionales si están presentes
+    if (id != null) json["id"] = id;
+    if (employeeId != null && employeeId != 0) json["employeeId"] = employeeId;
+    return json;
   }
 }

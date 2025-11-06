@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:fastflow_app/management/models/monitoring_summary.dart';
 import 'package:flutter/material.dart';
 import '../models/record.dart';
@@ -24,20 +25,36 @@ class _DeliveryInProgressScreenScreenState extends State<DeliveryInProgressScree
   bool _isLoading = true;
   bool _isCompletingDelivery = false;
   List<RecordLog> _records = [];
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
     _loadMonitoringSummary();
+    // Refrescar automáticamente cada 5 segundos para ver datos en tiempo real del sensor
+    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (mounted) {
+        _loadMonitoringSummary();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadMonitoringSummary() async {
-    setState(() { _isLoading = true; });
+    // No mostrar loading si ya hay datos (para refresh automático)
+    if (_summary == null) {
+      setState(() { _isLoading = true; });
+    }
     try {
       MonitoringSummary summary = await _recordService.getMonitoringSummary(widget.deliveryId);
       final records = await _recordService.getAllRecords(widget.deliveryId);
       print("SUMMARY: $summary");
-      print("RECORDS: $records");
+      print("RECORDS: ${records.length} records loaded");
       if (!mounted) return;
       setState(() {
         _summary = summary;
@@ -45,7 +62,7 @@ class _DeliveryInProgressScreenScreenState extends State<DeliveryInProgressScree
         _isLoading = false;
       });
     } catch (e) {
-      print("ERROR: $e");
+      print("ERROR loading monitoring: $e");
       if (!mounted) return;
       setState(() {
         _isLoading = false;
@@ -88,12 +105,46 @@ class _DeliveryInProgressScreenScreenState extends State<DeliveryInProgressScree
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _summary == null
-          ? const Center(child: Text('No monitoring data available'))
-          : Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          children: [
+          : _summary == null || _records.isEmpty
+          ? Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.sensors_off, size: 64, color: Colors.grey),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'No monitoring data available',
+                      style: TextStyle(fontSize: 18, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Waiting for sensor data...',
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: _loadMonitoringSummary,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Refresh'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.lightGreen,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : RefreshIndicator(
+              onRefresh: _loadMonitoringSummary,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
             const SizedBox(height: 8),
             const Text(
               'Last Sensor values',
@@ -164,10 +215,25 @@ class _DeliveryInProgressScreenScreenState extends State<DeliveryInProgressScree
                 ],
               ),
             ),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
+                      const SizedBox(height: 24),
+                      // Indicador de actualización automática
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.refresh, size: 16, color: Colors.grey[600]),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Auto-refresh every 5s',
+                            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+              ),
+            ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ElevatedButton(

@@ -5,7 +5,7 @@ import 'package:fastflow_app/management/models/delivery.dart';
 import 'package:http/http.dart' as http;
 
 class DeliveriesService {
-  final String baseUrl = "http://localhost:8080/api/secureon/v1/deliveries";
+  final String baseUrl = "https://secureon-backend-production.up.railway.app/api/secureon/v1/deliveries";
 
   Future<List<Deliveries>> getAllDeliveries() async {
     final http.Response response = await http.get(Uri.parse(baseUrl));
@@ -19,14 +19,18 @@ class DeliveriesService {
   }
 
   Future<List<Deliveries>> getPendingDeliveries() async {
+    return getDeliveriesByState('PENDING');
+  }
+
+  Future<List<Deliveries>> getDeliveriesByState(String state) async {
     final http.Response response =
-        await http.get(Uri.parse('$baseUrl/state/PENDING'));
+        await http.get(Uri.parse('$baseUrl/state/$state'));
 
     if (response.statusCode == HttpStatus.ok) {
       final List<dynamic> jsonResponse = json.decode(response.body);
       return jsonResponse.map((data) => Deliveries.fromJson(data)).toList();
     } else {
-      throw Exception('Failed to load deliveries');
+      throw Exception('Failed to load deliveries by state: $state');
     }
   }
 
@@ -48,11 +52,9 @@ class DeliveriesService {
       headers: {"Content-Type": "application/json"},
     );
 
-    if (response.statusCode == HttpStatus.noContent ||
-        response.statusCode == HttpStatus.ok) {
+    if (response.statusCode == HttpStatus.ok) {
       print(
           'Delivery $deliveryId status updated to IN-PROGRESS successfully for employee $employeeId.');
-      // No es necesario hacer nada más si la operación fue exitosa y no hay contenido.
     } else {
       print(
           'Failed to update delivery status. Status code: ${response.statusCode}');
@@ -67,10 +69,8 @@ class DeliveriesService {
       headers: {"Content-Type": "application/json"},
     );
 
-    if (response.statusCode == HttpStatus.noContent ||
-        response.statusCode == HttpStatus.ok) {
+    if (response.statusCode == HttpStatus.ok) {
       print('Delivery $deliveryId status updated to COMPLETED successfully');
-      // No es necesario hacer nada más si la operación fue exitosa y no hay contenido.
     } else {
       print(
           'Failed to update delivery status. Status code: ${response.statusCode}');
@@ -93,7 +93,9 @@ class DeliveriesService {
   Future<void> deleteDelivery(int id) async {
     final http.Response response = await http.delete(Uri.parse('$baseUrl/$id'));
 
-    if (response.statusCode != HttpStatus.noContent) {
+    if (response.statusCode != HttpStatus.ok && response.statusCode != HttpStatus.noContent) {
+      print('Failed to delete delivery. Status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
       throw Exception('Failed to delete delivery');
     }
   }
@@ -122,7 +124,9 @@ class DeliveriesService {
       body: json.encode(delivery.toJson()),
     );
 
-    if (response.statusCode != HttpStatus.created) {
+    if (response.statusCode != HttpStatus.ok && response.statusCode != HttpStatus.created) {
+      print('Failed to add delivery. Status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
       throw Exception('Failed to add delivery');
     }
   }

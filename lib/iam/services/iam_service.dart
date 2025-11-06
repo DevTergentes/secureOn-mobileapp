@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class AuthService {
-  final String baseUrl = 'http://localhost:8080/api/v1/auth';
+  final String baseUrl = 'https://secureon-backend-production.up.railway.app/api/v1/auth';
 
   Future<http.Response> signIn(String username, String password) async {
     final url = Uri.parse('$baseUrl/signin');

@@ -1,18 +1,27 @@
 class Sensor {
-  final int id;
+  final int? id; // Opcional para crear nuevos sensores
   final int ownerId;
   final bool safe;
 
   Sensor({
-    required this.id,
+    this.id,
     required this.ownerId,
     required this.safe,
-
   });
 
-  Sensor.fromJson(Map<String, dynamic> json)
-    : id = json['id'],
-      ownerId = json['ownerId'],
-      safe = json['safe'];
+  factory Sensor.fromJson(Map<String, dynamic> json) {
+    return Sensor(
+      id: json['id'],
+      ownerId: json['ownerId'],
+      safe: json['safe'],
+    );
+  }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id ?? 0,
+      'ownerId': ownerId,
+      'safe': safe,
+    };
+  }
 }

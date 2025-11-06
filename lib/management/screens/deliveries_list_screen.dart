@@ -79,7 +79,63 @@ class _DeliveriesListScreenState extends State<DeliveriesListScreen>  with Ticke
       _isLoadingPending = true;
     });
     try {
-      List<Deliveries> deliveries = await _deliveriesService.getPendingDeliveries();
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getInt('userId');
+      final role = prefs.getString('role');
+
+      List<Deliveries> deliveries;
+      
+      if (role == 'EMPLOYEE' && userId != null) {
+        // Para EMPLOYEE: obtener deliveries basado en si tiene un delivery activo
+        try {
+          final employee = await _employeeService.getEmployeesByUserId(userId);
+          if (employee.isEmpty) {
+            // Si no es empleado, mostrar todos los PENDING
+            deliveries = await _deliveriesService.getPendingDeliveries();
+            setState(() {
+              _pendingDeliveries = deliveries;
+              _isLoadingPending = false;
+            });
+            return;
+          }
+
+          final employeeId = employee[0].id;
+          if (employeeId == null) {
+            // Si no tiene employeeId, mostrar todos los PENDING
+            deliveries = await _deliveriesService.getPendingDeliveries();
+            setState(() {
+              _pendingDeliveries = deliveries;
+              _isLoadingPending = false;
+            });
+            return;
+          }
+
+          // Obtener deliveries del empleado para ver si tiene uno activo
+          final employeeDeliveries = await _deliveriesService.getDeliveryByEmployeeId(employeeId);
+          final activeDeliveries = employeeDeliveries.where((d) => d.state == 'IN_PROGRESS').toList();
+
+          // Si tiene un delivery IN_PROGRESS, mostrar solo deliveries PENDING de esa compañía
+          if (activeDeliveries.isNotEmpty) {
+            final activeDelivery = activeDeliveries.first;
+            final allDeliveries = await _deliveriesService.getAllDeliveries();
+            deliveries = allDeliveries.where((d) => 
+              d.state == 'PENDING' && d.ownerId == activeDelivery.ownerId
+            ).toList();
+          } else {
+            // Si no tiene delivery activo, puede ver todos los PENDING de todas las compañías
+            // Esto permite que acepte cualquier delivery de cualquier compañía
+            deliveries = await _deliveriesService.getPendingDeliveries();
+          }
+        } catch (e) {
+          print('Error fetching pending deliveries for employee: $e');
+          // Si falla, mostrar todos los PENDING
+          deliveries = await _deliveriesService.getPendingDeliveries();
+        }
+      } else {
+        // Para COMPANY: mostrar todos los PENDING
+        deliveries = await _deliveriesService.getPendingDeliveries();
+      }
+
       setState(() {
         _pendingDeliveries = deliveries;
       });
@@ -393,9 +449,35 @@ class _DeliveriesListScreenState extends State<DeliveriesListScreen>  with Ticke
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                delivery.destination,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      delivery.destination,
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _getStateColor(delivery.state).withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _getStateColor(delivery.state),
+                        width: 1,
+                      ),
+                    ),
+                    child: Text(
+                      delivery.state,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: _getStateColor(delivery.state),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 4),
               Text(
@@ -498,5 +580,18 @@ class _DeliveriesListScreenState extends State<DeliveriesListScreen>  with Ticke
         ),
       ),
     );
+  }
+
+  Color _getStateColor(String state) {
+    switch (state.toUpperCase()) {
+      case 'PENDING':
+        return Colors.orange;
+      case 'IN_PROGRESS':
+        return Colors.blue;
+      case 'COMPLETED':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
   }
 }

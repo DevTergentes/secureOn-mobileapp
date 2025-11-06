@@ -49,8 +49,7 @@ class _DeliveryAddScreenState extends State<DeliveryAddScreen> {
       stop: _stopController.text,
       combustibleType: _combustibleController.text,
       state: 'PENDING',
-      employeeId: 0,
-      // aún no asignado
+      employeeId: null, // aún no asignado
       ownerId: ownerId!,
     );
     try {
