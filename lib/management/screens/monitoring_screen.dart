@@ -5,7 +5,6 @@ import '../models/record.dart';
 import '../services/delivery_services.dart';
 import '../services/record_service.dart';
 import '../widgets/record_chart_widget.dart';
-import '../widgets/legend_item_widget.dart';
 
 /**
  * muestra los ultimos datos de monitoreo de un sensor y un grafico de los datos obtenidos
@@ -26,13 +25,14 @@ class _DeliveryInProgressScreenScreenState extends State<DeliveryInProgressScree
   bool _isCompletingDelivery = false;
   List<RecordLog> _records = [];
   Timer? _refreshTimer;
+  DateTime? _lastUpdate;
 
   @override
   void initState() {
     super.initState();
     _loadMonitoringSummary();
-    // Refrescar automáticamente cada 5 segundos para ver datos en tiempo real del sensor
-    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+    // Refrescar automáticamente cada 2 segundos para datos más en tiempo real
+    _refreshTimer = Timer.periodic(const Duration(seconds: 2), (_) {
       if (mounted) {
         _loadMonitoringSummary();
       }
@@ -53,13 +53,12 @@ class _DeliveryInProgressScreenScreenState extends State<DeliveryInProgressScree
     try {
       MonitoringSummary summary = await _recordService.getMonitoringSummary(widget.deliveryId);
       final records = await _recordService.getAllRecords(widget.deliveryId);
-      print("SUMMARY: $summary");
-      print("RECORDS: ${records.length} records loaded");
       if (!mounted) return;
       setState(() {
         _summary = summary;
         _records = records;
         _isLoading = false;
+        _lastUpdate = DateTime.now();
       });
     } catch (e) {
       print("ERROR loading monitoring: $e");
@@ -94,14 +93,55 @@ class _DeliveryInProgressScreenScreenState extends State<DeliveryInProgressScree
     }
   }
 
+  String _getTimeSinceLastUpdate() {
+    if (_lastUpdate == null) return '';
+    final diff = DateTime.now().difference(_lastUpdate!);
+    if (diff.inSeconds < 5) return 'Just now';
+    if (diff.inSeconds < 60) return '${diff.inSeconds}s ago';
+    return '${diff.inMinutes}m ago';
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Aquí el arreglo seguro para el gráfico:
-    final recordsToShow = _records.length > 6 ? _records.sublist(_records.length - 6) : _records;
+    final recordsToShow = _records.length > 10 ? _records.sublist(_records.length - 10) : _records;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Monitoring', style: TextStyle(fontWeight: FontWeight.bold)),
+        actions: [
+          // Indicador de estado en tiempo real
+          if (_summary != null)
+            Container(
+              margin: const EdgeInsets.only(right: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: _summary!.safe ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: _summary!.safe ? Colors.green : Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    _summary!.safe ? 'SAFE' : 'UNSAFE',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: _summary!.safe ? Colors.green[700] : Colors.red[700],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -122,6 +162,33 @@ class _DeliveryInProgressScreenScreenState extends State<DeliveryInProgressScree
                     Text(
                       'Waiting for sensor data...',
                       style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.blue[50],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.blue[200]!),
+                      ),
+                      child: Column(
+                        children: [
+                          const Text(
+                            '📡 Configure in Wokwi:',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'DELIVERY_ID = ${widget.deliveryId}',
+                            style: const TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     const SizedBox(height: 24),
                     ElevatedButton.icon(
@@ -145,85 +212,93 @@ class _DeliveryInProgressScreenScreenState extends State<DeliveryInProgressScree
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     children: [
-            const SizedBox(height: 8),
-            const Text(
-              'Last Sensor values',
-              style: TextStyle(
-                  fontSize: 22,
-                  color: Colors.black87,
-                  fontWeight: FontWeight.bold
-              ),
-            ),
-            const Divider(height: 32, color: Colors.lightGreen),
-            const SizedBox(height: 8),
-            Text(
-              'Gas: ${_summary!.record.gasValue}',
-              style: const TextStyle(
-                  fontSize: 18,
-                  color: Colors.black87),
-            ),
-            Text('Temperature: ${_summary!.record.temperatureValue} °C',
-              style: const TextStyle(
-                  fontSize: 18,
-                  color: Colors.black87),),
-            Text('BPM: ${_summary!.record.heartRateValue}',
-              style: const TextStyle(
-                  fontSize: 18,
-                  color: Colors.black87),),
-            const SizedBox(height: 8),
-            Text(
-              _summary!.safe ? 'Safe sensor' : 'Unsafe sensor',
-              style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: _summary!.safe ? Colors.green : Colors.red
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Divider(height: 32, color: Colors.lightGreen),
-            const Text(
-              'Monitoring Time',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text('${_summary!.monitoringMinutes} minutes',
-                style: const TextStyle(
-                    fontSize: 18,
-                    color: Colors.black87)),
-            const SizedBox(height: 24),
-            const Text(
-              'Sensor Trends',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 300,
-              child: RecordChart(records: recordsToShow),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  LegendItem(color: Colors.red, label: 'Temperature'),
-                  LegendItem(color: Colors.blue, label: 'Gas'),
-                  LegendItem(color: Colors.green, label: 'Heartbeat'),
-                ],
-              ),
-            ),
-                      const SizedBox(height: 24),
+                      // Header con tiempo de monitoreo y última actualización
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.lightGreen.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.lightGreen.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            Column(
+                              children: [
+                                const Icon(Icons.timer, color: Colors.lightGreen, size: 24),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${_summary!.monitoringMinutes} min',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  'Monitoring',
+                                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                ),
+                              ],
+                            ),
+                            Container(
+                              height: 40,
+                              width: 1,
+                              color: Colors.lightGreen.withOpacity(0.3),
+                            ),
+                            Column(
+                              children: [
+                                const Icon(Icons.update, color: Colors.lightGreen, size: 24),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _getTimeSinceLastUpdate(),
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  'Last update',
+                                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                ),
+                              ],
+                            ),
+                            Container(
+                              height: 40,
+                              width: 1,
+                              color: Colors.lightGreen.withOpacity(0.3),
+                            ),
+                            Column(
+                              children: [
+                                const Icon(Icons.data_usage, color: Colors.lightGreen, size: 24),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${_records.length}',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  'Records',
+                                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      // Gráficos con selector de tipo
+                      RecordChart(records: recordsToShow),
+                      const SizedBox(height: 16),
                       // Indicador de actualización automática
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.refresh, size: 16, color: Colors.grey[600]),
-                          const SizedBox(width: 4),
+                          _buildPulsingDot(),
+                          const SizedBox(width: 8),
                           Text(
-                            'Auto-refresh every 5s',
+                            'Live updates every 2s',
                             style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                           ),
                         ],
@@ -247,6 +322,34 @@ class _DeliveryInProgressScreenScreenState extends State<DeliveryInProgressScree
               : const Text('END DELIVERY', style: TextStyle(color: Colors.white)),
         ),
       ),
+    );
+  }
+
+  Widget _buildPulsingDot() {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.5, end: 1.0),
+      duration: const Duration(milliseconds: 800),
+      builder: (context, value, child) {
+        return Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: Colors.green.withOpacity(value),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.green.withOpacity(value * 0.5),
+                blurRadius: 4,
+                spreadRadius: 1,
+              ),
+            ],
+          ),
+        );
+      },
+      onEnd: () {
+        // Rebuild to restart animation
+        if (mounted) setState(() {});
+      },
     );
   }
 }

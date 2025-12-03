@@ -9,6 +9,7 @@ class Deliveries {
   final int? employeeId;    // puede estar vacío al crear
   final int ownerId;        // obligatorio (quién lo creó)
   final String state;
+  final int? sensorId;      // ID del sensor asociado (para Wokwi)
 
 
   Deliveries({
@@ -22,6 +23,7 @@ class Deliveries {
     this.employeeId,
     required this.ownerId,
     required this.state,
+    this.sensorId,
   });
 
   // Constructor para crear una instancia desde JSON
@@ -37,6 +39,7 @@ class Deliveries {
       employeeId: json['employeeId'],
       ownerId: json['ownerId'],
       state: json['state'],
+      sensorId: json['sensorId'],
     );
   }
 
@@ -55,6 +58,7 @@ class Deliveries {
     // Solo incluir campos opcionales si están presentes
     if (id != null) json["id"] = id;
     if (employeeId != null && employeeId != 0) json["employeeId"] = employeeId;
+    if (sensorId != null) json["sensorId"] = sensorId;
     return json;
   }
 }

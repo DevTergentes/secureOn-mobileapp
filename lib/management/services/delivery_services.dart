@@ -117,14 +117,17 @@ class DeliveriesService {
     }
   }
 
-  Future<void> addDelivery(Deliveries delivery) async {
+  Future<Deliveries> addDelivery(Deliveries delivery) async {
     final response = await http.post(
       Uri.parse(baseUrl),
       headers: {"Content-Type": "application/json"},
       body: json.encode(delivery.toJson()),
     );
 
-    if (response.statusCode != HttpStatus.ok && response.statusCode != HttpStatus.created) {
+    if (response.statusCode == HttpStatus.ok || response.statusCode == HttpStatus.created) {
+      final jsonResponse = json.decode(response.body);
+      return Deliveries.fromJson(jsonResponse);
+    } else {
       print('Failed to add delivery. Status code: ${response.statusCode}');
       print('Response body: ${response.body}');
       throw Exception('Failed to add delivery');
